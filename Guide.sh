@@ -4,8 +4,7 @@ python -m venv rummage-env
 # Step 2: Activate the virtual environment
 # On Windows:
 rummage-env\Scripts\activate
-# On macOS/Linux:
-source rummage-env/bin/activate
+
 
 # Step 3: Install required libraries
 pip install flask
