@@ -4,7 +4,7 @@ Loading and preparing data from master3.3.csv...
 
 [I 2025-09-01 11:38:11,744] A new study created in memory with name: no-name-dffadb39-7502-4837-a837-f82bd0ede722
 
-Using 5615 real measurements for training.
+Using 5615 real measurements for training
 Data preparation complete.
 
 Starting hyperparameter search for CatBoost...
@@ -459,4 +459,5 @@ Saving Optuna study log to /content/drive/MyDrive/Colab_Research_Results/hyp_cat
     depth: 12
     l2_leaf_reg: 9.892421317596718
     subsample: 0.8190700311190122
+
 
