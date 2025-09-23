@@ -8,6 +8,7 @@ rummage-env\Scripts\activate
 
 # Step 3: Install required libraries
 pip install flask
+pip install ultralytics
 
 # Step 4: Run the server
 python server.py
