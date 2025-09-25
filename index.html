@@ -1,14 +1,930 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Rummage</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <title>Rummage: The Game</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f1216;
+      --panel: #151a21;
+      --accent: #8ef0c0;
+      --accent-2: #ff6b6b;
+      --text: #e8edf3;
+      --muted: #9aa5b1;
+      --gold: #f8d34a;
+      --shadow: rgba(0,0,0,.35);
+    }
+    * { box-sizing: border-box }
+    html, body { height: 100% }
+    body {
+      margin: 0;
+      font-family: Nunito, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 800px at 80% 10%, #122030, var(--bg));
+      color: var(--text);
+    }
+    #app {
+      display: grid;
+      grid-template-columns: 280px 1fr 360px;
+      grid-template-rows: 64px 1fr 120px;
+      grid-template-areas:
+        "topbar topbar topbar"
+        "sidebar board rightbar"
+        "footer footer footer";
+      height: 100vh;
+      overflow: hidden;
+    }
+    .glass {
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      backdrop-filter: saturate(1.2) blur(10px);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px;
+      box-shadow: 0 8px 30px var(--shadow);
+    }
+    #topbar {
+      grid-area: topbar;
+      display: grid;
+      grid-template-columns: 320px 1fr 420px;
+      align-items: center;
+      gap: 16px;
+      padding: 12px 16px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 12px;
+      border-radius: 12px;
+    }
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: conic-gradient(from 210deg, var(--accent), var(--gold), var(--accent-2), var(--accent));
+      box-shadow: 0 0 0 2px rgba(255,255,255,.1) inset;
+    }
+    .brand-title {
+      font-weight: 800;
+      letter-spacing: .6px;
+      font-size: 18px;
+    }
+    .toolbar {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: center;
+    }
+    .toolbar .btn {
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.12);
+      color: var(--text);
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+      cursor: pointer;
+      transition: transform .08s ease, box-shadow .12s ease;
+    }
+    .btn:hover { transform: translateY(-1px) }
+    .btn:active { transform: translateY(1px) scale(.99) }
+    .btn-primary { border-color: rgba(142,240,192,.4); box-shadow: 0 0 0 1px rgba(142,240,192,.3) inset }
+    .status {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      align-items: center;
+    }
+    .stat {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+    }
+    .stat .value { font-weight: 800 }
+    .stat .label { color: var(--muted); font-size: 13px }
+    #sidebar {
+      grid-area: sidebar;
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 16px;
+      padding: 16px;
+      overflow: hidden;
+    }
+    #board {
+      grid-area: board;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 16px;
+      padding: 16px;
+      overflow: hidden;
+    }
+    #rightbar {
+      grid-area: rightbar;
+      display: grid;
+      grid-template-rows: auto auto auto 1fr;
+      gap: 16px;
+      padding: 16px;
+      overflow: hidden;
+    }
+    #footer {
+      grid-area: footer;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      padding: 16px;
+    }
+    .panel { padding: 14px; border-radius: 16px }
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .panel-title { font-weight: 800; letter-spacing: .5px }
+    .badge {
+      padding: 6px 10px;
+      border-radius: 8px;
+      background: rgba(142,240,192,.12);
+      border: 1px solid rgba(142,240,192,.28);
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 12px;
+    }
+    .list { display: grid; gap: 8px }
+    .list-item {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 9px;
+      font-size: 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      color: var(--muted);
+    }
+    .chip.success { border-color: rgba(142,240,192,.3); color: var(--accent) }
+    .chip.warn { border-color: rgba(248,211,74,.3); color: var(--gold) }
+    .chip.danger { border-color: rgba(255,107,107,.3); color: var(--accent-2) }
+    .inventory-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+    }
+    .slot {
+      position: relative;
+      aspect-ratio: 1;
+      border: 1px dashed rgba(255,255,255,.16);
+      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+    }
+    .slot[data-rarity="rare"] { border-color: rgba(142,240,192,.4) }
+    .slot[data-rarity="epic"] { border-color: rgba(248,211,74,.5) }
+    .slot[data-rarity="legendary"] { border-color: rgba(255,107,107,.5) }
+    .slot .qty {
+      position: absolute;
+      bottom: 6px; right: 8px;
+      font-size: 11px;
+      padding: 3px 6px;
+      border-radius: 6px;
+      background: rgba(0,0,0,.4);
+    }
+    .grid-wrap {
+      display: grid;
+      gap: 12px;
+      grid-template-rows: auto 1fr;
+      height: 100%;
+    }
+    .hud {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 12px;
+      align-items: center;
+    }
+    .progress {
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      overflow: hidden;
+    }
+    .progress > span {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), #77d9ff);
+      width: 42%;
+    }
+    .game-grid {
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 18px;
+      padding: 12px;
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      grid-auto-rows: 56px;
+      gap: 8px;
+      overflow: auto;
+    }
+    .cell {
+      border-radius: 12px;
+      background: #17202a;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      border: 1px solid rgba(255,255,255,.06);
+      transition: transform .06s ease, box-shadow .12s ease;
+      position: relative;
+    }
+    .cell:hover { transform: translateY(-2px) }
+    .cell .marker {
+      position: absolute;
+      top: 8px; left: 8px;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      opacity: .8;
+    }
+    .cell[data-type="trap"] .marker { background: var(--accent-2) }
+    .cell[data-type="treasure"] .marker { background: var(--gold) }
+    .powerups {
+      display: grid;
+      grid-auto-flow: column;
+      gap: 10px;
+      align-items: center;
+    }
+    .powerup {
+      display: grid;
+      grid-template-columns: 28px 1fr auto;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 10px;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 10px;
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+    }
+    .powerup .icon {
+      width: 28px; height: 28px;
+      border-radius: 8px;
+      background: radial-gradient(circle at 30% 20%, var(--accent), #77d9ff);
+    }
+    .powerup .cta {
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(142,240,192,.4);
+      color: var(--accent);
+      background: rgba(142,240,192,.12);
+      cursor: pointer;
+    }
+    .right-card { display: grid; gap: 12px }
+    .avatar {
+      display: grid;
+      grid-template-columns: 52px 1fr auto;
+      gap: 12px;
+      align-items: center;
+    }
+    .avatar .img {
+      width: 52px; height: 52px;
+      border-radius: 12px;
+      background: url('') center/cover, linear-gradient(180deg, #1a2736, #12161d);
+      border: 1px solid rgba(255,255,255,.1);
+    }
+    .avatar .name { font-weight: 800 }
+    .avatar .level { color: var(--gold); font-weight: 700 }
+    .tabs { display: grid; grid-auto-flow: column; gap: 8px }
+    .tab {
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,.1);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      color: var(--muted);
+      cursor: pointer;
+    }
+    .tab[aria-selected="true"] {
+      border-color: rgba(142,240,192,.4);
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .shop-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .shop-item {
+      display: grid;
+      gap: 10px;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 12px;
+      padding: 10px;
+    }
+    .shop-item .title { font-weight: 700 }
+    .shop-item .buy {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+    }
+    .shop-item .price { color: var(--gold); font-weight: 800 }
+    .shop-item .btn {
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(248,211,74,.4);
+      color: var(--gold);
+      background: rgba(248,211,74,.12);
+      cursor: pointer;
+    }
+    .footer-left, .footer-right {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .control {
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+    }
+    .control label { font-size: 13px; color: var(--muted) }
+    .control input[type="range"] { width: 100% }
+    .modal-root {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      pointer-events: none;
+    }
+    .modal {
+      width: min(720px, 90vw);
+      pointer-events: all;
+      padding: 16px;
+      border-radius: 16px;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .modal-body { display: grid; gap: 12px }
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.6);
+      opacity: 0;
+      visibility: hidden;
+      transition: .2s ease;
+    }
+    .overlay[data-open="true"] { opacity: 1; visibility: visible }
+    .toast-stack {
+      position: fixed;
+      bottom: 18px; right: 18px;
+      display: grid;
+      gap: 8px;
+      z-index: 50;
+    }
+    .toast {
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.1);
+      background: rgba(0,0,0,.4);
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+      color: var(--text);
+    }
+    @media (max-width: 1100px) {
+      #app {
+        grid-template-columns: 1fr;
+        grid-template-rows: 64px auto auto auto 120px;
+        grid-template-areas:
+          "topbar"
+          "board"
+          "sidebar"
+          "rightbar"
+          "footer";
+      }
+    }
+  </style>
 </head>
 <body>
-    <div id="container">
-        <div id="scoreboard"><span id="score">0</span></div>
-        <div id="grid"></div>
+  <div id="app">
+    <header id="topbar">
+      <div class="brand glass">
+        <div class="brand-logo" aria-hidden="true"></div>
+        <div class="brand-title" aria-label="Game title">Rummage</div>
+      </div>
+      <nav class="toolbar">
+        <button class="btn btn-primary" id="btnPlay" aria-label="Start game">Play</button>
+        <button class="btn" id="btnPause" aria-label="Pause game">Pause</button>
+        <button class="btn" id="btnReset" aria-label="Reset game">Reset</button>
+        <button class="btn" id="btnHelp" aria-label="Open help">Help</button>
+        <button class="btn" id="btnSettings" aria-label="Open settings">Settings</button>
+      </nav>
+      <section class="status">
+        <div class="stat glass" role="status" aria-live="polite">
+          <div class="value" id="statScore">0</div>
+          <div class="label">Score</div>
+        </div>
+        <div class="stat glass">
+          <div class="value" id="statTime">03:00</div>
+          <div class="label">Time</div>
+        </div>
+        <div class="stat glass">
+          <div class="value" id="statStreak">x0</div>
+          <div class="label">Streak</div>
+        </div>
+      </section>
+    </header>
+
+    <aside id="sidebar">
+      <div class="panel glass">
+        <div class="panel-header">
+          <div class="panel-title">Quests</div>
+          <div class="badge">Daily</div>
+        </div>
+        <div class="list" id="questList" role="list">
+          <div class="list-item" role="listitem">
+            <div class="chip success">Active</div>
+            <div>Find 5 rare artifacts</div>
+            <div class="chip">0/5</div>
+          </div>
+          <div class="list-item" role="listitem">
+            <div class="chip warn">New</div>
+            <div>Clear 3 trap tiles</div>
+            <div class="chip">0/3</div>
+          </div>
+          <div class="list-item" role="listitem">
+            <div class="chip danger">Hard</div>
+            <div>Achieve 2 flawless rounds</div>
+            <div class="chip">0/2</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel glass">
+        <div class="panel-header">
+          <div class="panel-title">Inventory</div>
+          <div class="badge">Capacity 36</div>
+        </div>
+        <div class="inventory-grid" id="inventory">
+          <div class="slot" data-rarity="common"><span>Empty</span></div>
+          <div class="slot" data-rarity="rare"><span>Compass</span><span class="qty">1</span></div>
+          <div class="slot" data-rarity="epic"><span>Chronometer</span><span class="qty">1</span></div>
+          <div class="slot" data-rarity="legendary"><span>Oracle Lens</span><span class="qty">1</span></div>
+          <div class="slot" data-rarity="common"><span>Empty</span></div>
+          <div class="slot" data-rarity="common"><span>Empty</span></div>
+          <div class="slot" data-rarity="common"><span>Empty</span></div>
+          <div class="slot" data-rarity="rare"><span>Shovel</span><span class="qty">2</span></div>
+          <div class="slot" data-rarity="common"><span>Empty</span></div>
+          <div class="slot" data-rarity="common"><span>Empty</span></div>
+          <div class="slot" data-rarity="common"><span>Empty</span></div>
+          <div class="slot" data-rarity="common"><span>Empty</span></div>
+          <div class="slot" data-rarity="common"><span>Empty</span></div>
+          <div class="slot" data-rarity="common"><span>Empty</span></div>
+          <div class="slot" data-rarity="rare"><span>Scanner</span><span class="qty">1</span></div>
+          <div class="slot" data-rarity="common"><span>Empty</span></div>
+          <div class="slot" data-rarity="common"><span>Empty</span></div>
+          <div class="slot" data-rarity="common"><span>Empty</span></div>
+        </div>
+      </div>
+
+      <div class="panel glass">
+        <div class="panel-header">
+          <div class="panel-title">Achievements</div>
+          <div class="badge">3/12</div>
+        </div>
+        <div class="list">
+          <div class="list-item">
+            <div class="chip success">Unlocked</div>
+            <div>First Find</div>
+            <div class="chip">+100</div>
+          </div>
+          <div class="list-item">
+            <div class="chip warn">Progress</div>
+            <div>Cartographer</div>
+            <div class="chip">72%</div>
+          </div>
+          <div class="list-item">
+            <div class="chip">Hidden</div>
+            <div>Silent Sweep</div>
+            <div class="chip">0%</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel glass">
+        <div class="panel-header">
+          <div class="panel-title">Leaderboard</div>
+          <div class="badge">Season 4</div>
+        </div>
+        <div class="list" id="leaderboard">
+          <div class="list-item">
+            <div class="chip">#1</div>
+            <div>RogueRelic</div>
+            <div class="chip success">245,980</div>
+          </div>
+          <div class="list-item">
+            <div class="chip">#2</div>
+            <div>EchoScout</div>
+            <div class="chip success">231,420</div>
+          </div>
+          <div class="list-item">
+            <div class="chip">#3</div>
+            <div>DustDiver</div>
+            <div class="chip success">219,030</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main id="board">
+      <div class="panel glass">
+        <div class="hud">
+          <div class="powerups" aria-label="Active power-ups">
+            <div class="powerup">
+              <div class="icon" aria-hidden="true"></div>
+              <div>Trace Sweep</div>
+              <button class="cta" data-action="activate">Use</button>
+            </div>
+            <div class="powerup">
+              <div class="icon" aria-hidden="true" style="background: radial-gradient(circle at 30% 20%, var(--gold), #ff9f43)"></div>
+              <div>Time Fold</div>
+              <button class="cta" data-action="activate">Use</button>
+            </div>
+            <div class="powerup">
+              <div class="icon" aria-hidden="true" style="background: radial-gradient(circle at 30% 20%, var(--accent-2), #ff8ab0)"></div>
+              <div>Trap Shield</div>
+              <button class="cta" data-action="activate">Use</button>
+            </div>
+          </div>
+          <div class="progress" aria-label="Round progress">
+            <span id="roundProgress"></span>
+          </div>
+          <div class="chip" id="roundLabel">Round 1</div>
+        </div>
+      </div>
+
+      <div class="grid-wrap">
+        <div class="panel-title" style="padding:0 6px">Expedition Grid</div>
+        <div class="game-grid" id="gameGrid" role="grid" aria-label="Rummage grid">
+          <div class="cell" role="gridcell" tabindex="0" data-type="neutral"><div class="marker"></div>1</div>
+          <div class="cell" role="gridcell" tabindex="0" data-type="trap"><div class="marker"></div>!</div>
+          <div class="cell" role="gridcell" tabindex="0" data-type="treasure"><div class="marker"></div>★</div>
+          <div class="cell" role="gridcell" tabindex="0" data-type="neutral">2</div>
+          <div class="cell" role="gridcell" tabindex="0" data-type="neutral">3</div>
+          <div class="cell" role="gridcell" tabindex="0" data-type="neutral">4</div>
+          <div class="cell" role="gridcell" tabindex="0" data-type="trap"><div class="marker"></div>!</div>
+          <div class="cell" role="gridcell" tabindex="0" data-type="neutral">5</div>
+          <div class="cell" role="gridcell" tabindex="0" data-type="neutral">6</div>
+          <div class="cell" role="gridcell" tabindex="0" data-type="neutral">7</div>
+          <div class="cell" role="gridcell" tabindex="0" data-type="neutral">8</div>
+          <div class="cell" role="gridcell" tabindex="0" data-type="treasure"><div class="marker"></div>★</div>
+          <div class="cell" role="gridcell" tabindex="0" data-type="neutral">9</div>
+          <div class="cell" role="gridcell" tabindex="0" data-type="neutral">10</div>
+          <div class="cell" role="gridcell" tabindex="0" data-type="neutral">11</div>
+          <div class="cell" role="gridcell" tabindex="0" data-type="trap"><div class="marker"></div>!</div>
+          <div class="cell" role="gridcell" tabindex="0" data-type="neutral">12</div>
+          <div class="cell" role="gridcell" tabindex="0" data-type="neutral">13</div>
+          <div class="cell" role="gridcell" tabindex="0" data-type="neutral">14</div>
+          <div class="cell" role="gridcell" tabindex="0" data-type="treasure"><div class="marker"></div>★</div>
+        </div>
+      </div>
+    </main>
+
+    <aside id="rightbar">
+      <div class="panel glass right-card">
+        <div class="panel-header">
+          <div class="panel-title">Explorer</div>
+          <div class="badge">Online</div>
+        </div>
+        <div class="avatar">
+          <div class="img" aria-hidden="true"></div>
+          <div>
+            <div class="name">You</div>
+            <div class="chip">Pune, India</div>
+          </div>
+          <div class="level">Lv. 7</div>
+        </div>
+        <div class="tabs" role="tablist" aria-label="Profile tabs">
+          <button class="tab" role="tab" aria-selected="true" aria-controls="tabStats">Stats</button>
+          <button class="tab" role="tab" aria-selected="false" aria-controls="tabUpgrades">Upgrades</button>
+          <button class="tab" role="tab" aria-selected="false" aria-controls="tabJournal">Journal</button>
+        </div>
+        <div id="tabStats" role="tabpanel">
+          <div class="list">
+            <div class="list-item">
+              <div class="chip">Accuracy</div>
+              <div>83%</div>
+              <div class="chip success">+2%</div>
+            </div>
+            <div class="list-item">
+              <div class="chip">Discoveries</div>
+              <div>124</div>
+              <div class="chip success">+5</div>
+            </div>
+            <div class="list-item">
+              <div class="chip">Traps Triggered</div>
+              <div>9</div>
+              <div class="chip danger">-1 last</div>
+            </div>
+          </div>
+        </div>
+        <div id="tabUpgrades" role="tabpanel" hidden>
+          <div class="shop-grid">
+            <div class="shop-item">
+              <div class="title">Phase Scanner</div>
+              <div class="chip">Reveal adjacent tiles</div>
+              <div class="buy">
+                <div class="price">2,500</div>
+                <button class="btn">Buy</button>
+              </div>
+            </div>
+            <div class="shop-item">
+              <div class="title">Luck Charm</div>
+              <div class="chip">+3% rare drops</div>
+              <div class="buy">
+                <div class="price">1,400</div>
+                <button class="btn">Buy</button>
+              </div>
+            </div>
+            <div class="shop-item">
+              <div class="title">Trap Nullifier</div>
+              <div class="chip">Negate next trap</div>
+              <div class="buy">
+                <div class="price">3,100</div>
+                <button class="btn">Buy</button>
+              </div>
+            </div>
+            <div class="shop-item">
+              <div class="title">Chrono Tether</div>
+              <div class="chip">+20s time</div>
+              <div class="buy">
+                <div class="price">2,800</div>
+                <button class="btn">Buy</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="tabJournal" role="tabpanel" hidden>
+          <div class="list">
+            <div class="list-item">
+              <div class="chip">Log</div>
+              <div>Entered Ruins of Velora</div>
+              <div class="chip">2m ago</div>
+            </div>
+            <div class="list-item">
+              <div class="chip">Log</div>
+              <div>Recovered Ancient Dial</div>
+              <div class="chip">6m ago</div>
+            </div>
+            <div class="list-item">
+              <div class="chip">Log</div>
+              <div>Avoided Sandspike Trap</div>
+              <div class="chip">10m ago</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel glass">
+        <div class="panel-header">
+          <div class="panel-title">Hints</div>
+          <div class="badge">Adaptive</div>
+        </div>
+        <div class="list">
+          <div class="list-item">
+            <div class="chip">Tip</div>
+            <div>Treasure clusters avoid trap edges by one tile.</div>
+            <div class="chip">Insight</div>
+          </div>
+          <div class="list-item">
+            <div class="chip">Tip</div>
+            <div>Use Trace Sweep when streak exceeds x3 for bonus.</div>
+            <div class="chip">Combo</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel glass">
+        <div class="panel-header">
+          <div class="panel-title">Events</div>
+          <div class="badge">Live</div>
+        </div>
+        <div class="list">
+          <div class="list-item">
+            <div class="chip">Now</div>
+            <div>Sandstorm Surge: visibility reduced</div>
+            <div class="chip danger">Hazard</div>
+          </div>
+          <div class="list-item">
+            <div class="chip">Next</div>
+            <div>Golden Vein: +10% treasure rate</div>
+            <div class="chip success">Boost</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <footer id="footer">
+      <div class="footer-left">
+        <div class="control">
+          <label for="musicVol">Music volume</label>
+          <input id="musicVol" type="range" min="0" max="100" value="64">
+        </div>
+        <div class="control">
+          <label for="sfxVol">SFX volume</label>
+          <input id="sfxVol" type="range" min="0" max="100" value="72">
+        </div>
+        <div class="control">
+          <label for="difficulty">Difficulty</label>
+          <select id="difficulty">
+            <option>Casual</option>
+            <option selected>Explorer</option>
+            <option>Veteran</option>
+            <option>Mythic</option>
+          </select>
+        </div>
+        <div class="control">
+          <label for="theme">Theme</label>
+          <select id="theme">
+            <option selected>Midnight</option>
+            <option>Desert</option>
+            <option>Ocean</option>
+            <option>Aurora</option>
+          </select>
+        </div>
+      </div>
+      <div class="footer-right">
+        <div class="control">
+          <label>Hotkeys</label>
+          <div class="chip">Space: Reveal</div>
+          <div class="chip">R: Reset</div>
+          <div class="chip">H: Help</div>
+        </div>
+        <div class="control">
+          <label>Round seed</label>
+          <input type="text" id="seed" placeholder="Enter seed">
+        </div>
+        <div class="control">
+          <label>Account</label>
+          <div class="chip">Guest</div>
+          <button class="btn">Sign in</button>
+        </div>
+        <div class="control">
+          <label>Streaming</label>
+          <div class="chip">Status: Idle</div>
+          <button class="btn">Connect</button>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <div class="overlay" id="overlay" data-open="false"></div>
+
+  <div class="modal-root" aria-hidden="true" id="modalRoot">
+    <div class="modal glass" id="modalHelp" role="dialog" aria-modal="true" aria-labelledby="modalHelpTitle" hidden>
+      <div class="modal-header">
+        <div class="panel-title" id="modalHelpTitle">How to play Rummage</div>
+        <button class="btn" data-close>Close</button>
+      </div>
+      <div class="modal-body">
+        <div class="list">
+          <div class="list-item">
+            <div class="chip">Goal</div>
+            <div>Reveal treasure tiles without triggering traps.</div>
+            <div class="chip">Win</div>
+          </div>
+          <div class="list-item">
+            <div class="chip">Controls</div>
+            <div>Click to reveal, Shift+Click to mark suspicion.</div>
+            <div class="chip">Mastery</div>
+          </div>
+          <div class="list-item">
+            <div class="chip">Strategy</div>
+            <div>Use hints, track patterns, leverage power-ups.</div>
+            <div class="chip">Smart</div>
+          </div>
+        </div>
+      </div>
     </div>
-    <script src="script.js"></script>
+
+    <div class="modal glass" id="modalSettings" role="dialog" aria-modal="true" aria-labelledby="modalSettingsTitle" hidden>
+      <div class="modal-header">
+        <div class="panel-title" id="modalSettingsTitle">Settings</div>
+        <button class="btn" data-close>Close</button>
+      </div>
+      <div class="modal-body">
+        <div class="list">
+          <div class="list-item">
+            <div class="chip">Graphics</div>
+            <div>
+              <label><input type="checkbox" id="fxBloom" checked> Bloom</label>
+            </div>
+            <div class="chip">On</div>
+          </div>
+          <div class="list-item">
+            <div class="chip">Accessibility</div>
+            <div>
+              <label><input type="checkbox" id="reduceMotion"> Reduce motion</label>
+            </div>
+            <div class="chip">Off</div>
+          </div>
+          <div class="list-item">
+            <div class="chip">Language</div>
+            <div>
+              <select id="lang">
+                <option selected>English</option>
+                <option>हिन्दी</option>
+                <option>मराठी</option>
+              </select>
+            </div>
+            <div class="chip">Global</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal glass" id="modalGameOver" role="dialog" aria-modal="true" aria-labelledby="modalGameOverTitle" hidden>
+      <div class="modal-header">
+        <div class="panel-title" id="modalGameOverTitle">Game over</div>
+        <button class="btn" data-close>Close</button>
+      </div>
+      <div class="modal-body">
+        <div class="list">
+          <div class="list-item">
+            <div class="chip">Score</div>
+            <div id="finalScore">0</div>
+            <div class="chip">Summary</div>
+          </div>
+          <div class="list-item">
+            <div class="chip">Best streak</div>
+            <div id="finalStreak">x0</div>
+            <div class="chip">Peak</div>
+          </div>
+          <div class="list-item">
+            <div class="chip">Artifacts</div>
+            <div id="finalArtifacts">0</div>
+            <div class="chip">Found</div>
+          </div>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:8px">
+          <button class="btn btn-primary">Play again</button>
+          <button class="btn">Share</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-stack" id="toasts" aria-live="polite" aria-atomic="true">
+    <div class="toast">
+      <div class="chip success">Bonus</div>
+      <div>Streak x3 activated</div>
+      <button class="btn">Nice!</button>
+    </div>
+  </div>
+
+  <audio id="sfxReveal" preload="auto" src=""></audio>
+  <audio id="sfxTrap" preload="auto" src=""></audio>
+  <audio id="sfxTreasure" preload="auto" src=""></audio>
+
+  <script>
+    const overlay = document.getElementById('overlay');
+    const modalRoot = document.getElementById('modalRoot');
+    const help = document.getElementById('modalHelp');
+    const settings = document.getElementById('modalSettings');
+    const gameOver = document.getElementById('modalGameOver');
+    const open = el => { overlay.dataset.open = 'true'; el.hidden = false; modalRoot.setAttribute('aria-hidden','false') };
+    const close = () => { overlay.dataset.open = 'false'; [help, settings, gameOver].forEach(m => m.hidden = true); modalRoot.setAttribute('aria-hidden','true') };
+    document.getElementById('btnHelp').addEventListener('click', () => open(help));
+    document.getElementById('btnSettings').addEventListener('click', () => open(settings));
+    modalRoot.addEventListener('click', e => { if (e.target.dataset.close !== undefined) close() });
+    overlay.addEventListener('click', close);
+    const tabs = Array.from(document.querySelectorAll('.tab'));
+    const panels = ['tabStats','tabUpgrades','tabJournal'].map(id => document.getElementById(id));
+    tabs.forEach((t,i) => t.addEventListener('click', () => {
+      tabs.forEach(x => x.setAttribute('aria-selected','false'));
+      panels.forEach(p => p.hidden = true);
+      t.setAttribute('aria-selected','true');
+      panels[i].hidden = false;
+    }));
+  </script>
 </body>
 </html>
